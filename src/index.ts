@@ -1,42 +1,10 @@
 import "reflect-metadata";
+import { ColumnType } from "./types";
+import { Column, DbModel } from "./decorators";
+import { Model } from "./base";
 
-enum ColumnType {
-	"PrimaryKey" = "PrimaryKey",
-	"OneToMany" = "OneToMany",
-	"OneToOne" = "OneToOne",
-	"Normal" = "Normal",
-	"ForeignKey" = "ForeignKey",
-}
-
-function Column(type: ColumnType, tableName?: string) {
-	return function (target: any, key: string) {
-		if (!tableName) {
-			tableName = key;
-		}
-		let t = Reflect.getMetadata("design:type", target, key).name;
-		Reflect.defineMetadata(
-			`${key}-column`,
-			{
-				columnName: key,
-				valueType: t,
-				columnType: type,
-				tableName,
-			},
-			target
-		);
-	};
-}
-
-function Model(target: any) {
-	target = target.prototype;
-	const keys = Reflect.getMetadataKeys(target);
-	// keys.forEach((metaKey) => {
-	// 	console.log(Reflect.getMetadata(metaKey, target));
-	// });
-}
-
-@Model
-class Book {
+@DbModel
+class Book extends Model {
 	@Column(ColumnType.PrimaryKey)
 	id: number;
 
@@ -47,14 +15,14 @@ class Book {
 	author: number;
 
 	constructor(id: number, name: string, author: number) {
+		super();
 		this.id = id;
 		this.name = name;
 		this.author = author;
 	}
 }
-
-@Model
-class Author {
+@DbModel
+class Author extends Model {
 	@Column(ColumnType.PrimaryKey)
 	id: number;
 
@@ -62,26 +30,30 @@ class Author {
 	name: string;
 
 	constructor(id: number, name: string) {
+		super();
 		this.id = id;
 		this.name = name;
 	}
 }
 
-const createDbContext = (callback: any) => {
-	const models: any = [];
+const newBook = new Book(1, "maciej", 2);
+newBook.generateTables();
 
-	const registerModel = (model: any) => {
-		models.push(model);
-	};
+// const createDbContext = (callback: any) => {
+// 	const models: any = [];
 
-	callback(registerModel);
+// 	const registerModel = (model: any) => {
+// 		models.push(model);
+// 	};
 
-	return models;
-};
+// 	callback(registerModel);
 
-console.log(
-	createDbContext((registerModel: Function) => {
-		registerModel(Author);
-		registerModel(Book);
-	})
-);
+// 	return models;
+// };
+
+// console.log(
+// 	createDbContext((registerModel: Function) => {
+// 		registerModel(Author);
+// 		registerModel(Book);
+// 	})
+// );
